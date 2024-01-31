@@ -1,43 +1,66 @@
 #include <stdlib.h>
+#include <stdio.h>
 #include <immintrin.h>
 const char* dgemm_desc = "Simple blocked dgemm.";
 
-#ifndef BLOCK_SIZE
-#define BLOCK_SIZE 41
+#ifndef L2_SIZE
+#define L2_SIZE 41
 #endif
 
-#ifndef KERNEL_SIZE
-#define KERNEL_SIZE 4
+#ifndef L1_SIZE
+#define L1_SIZE 20
 #endif
 
 #define min(a, b) (((a) < (b)) ? (a) : (b))
 
-void micro_kernel(int lda, double *A, double *B, double *C){
-    __m256d res0; __m256d res1; __m256d res2; __m256 res3;
+typedef double v4df __attribute__ ((vector_size (32), aligned(1)));
 
-    res0 = _mm256_load_pd(C + 0 * lda);
-    for(int k = 0; k < 4; k++) res0 = _mm256_add_pd(res0, _mm256_mul_pd(_mm256_load_pd(D + k * lda), _mm256_load_pd(B + 0 * lda)));
-    _mm256_store_pd(C + 0 * lda, res0);
+/* 
+ *The micro kernel, which computes 4x4 block at a time. 
+*/
+void micro_kernel(int lda, int K, double *A, double *B, double *C){
 
-    res1 = _mm256_load_pd(C + 1 * lda);
-    for(int k = 0; k < 4; k++) res0 = _mm256_add_pd(res0, _mm256_mul_pd(_mm256_load_pd(D + k * lda), _mm256_load_pd(B + 1 * lda)));
-    _mm256_store_pd(C + 1 * lda, res1);
+    // Four columns
+    double *c0 = C;
+    double *c1 = C + lda;
+    double *c2 = C + lda * 2;
+    double *c3 = C + lda * 3;
 
-    res2 = _mm256_load_pd(C + 2 * lda);
-    for(int k = 0; k < 4; k++) res0 = _mm256_add_pd(res0, _mm256_mul_pd(_mm256_load_pd(D + k * lda), _mm256_load_pd(B + 2 * lda)));
-    _mm256_store_pd(C + 2 * lda, res2);
+    // Load each column with 4 elements
+    v4df v0 = *(v4df*) c0;
+    v4df v1 = *(v4df*) c1;
+    v4df v2 = *(v4df*) c2;
+    v4df v3 = *(v4df*) c3;
 
-    res3 = _mm256_load_pd(C + 3 * lda);
-    for(int k = 0; k < 4; k++) res0 = _mm256_add_pd(res0, _mm256_mul_pd(_mm256_load_pd(D + k * lda), _mm256_load_pd(B + 3 * lda)));
-    _mm256_store_pd(C + 3 * lda, res3);
+    // Compute
+    for(int i = 0; i < K; i++){
+        v4df a0 = *(v4df*) A;
+        // v4df a0 = {A[0], A[lda], A[2 * lda], A[3 * lda]};
+        v4df b0 = {B[0], B[0], B[0], B[0]};
+        v4df b1 = {B[lda], B[lda], B[lda], B[lda]};
+        v4df b2 = {B[lda * 2], B[lda * 2], B[lda * 2], B[lda * 2]};
+        v4df b3 = {B[lda * 3], B[lda * 3], B[lda * 3], B[lda * 3]};
+        A += lda; B += 1;
+
+        v0 = v0 + a0 * b0;
+        v1 = v1 + a0 * b1;
+        v2 = v2 + a0 * b2;
+        v3 = v3 + a0 * b3;
+    }
+
+    // Store
+    *(v4df*) c0 = v0;
+    *(v4df*) c1 = v1;
+    *(v4df*) c2 = v2;
+    *(v4df*) c3 = v3;
 }
 
 /*
- * Copy the transpose of A to D
+ * Copy the transpose of A to D.
 */
-void copy_transpose(int lda, double *A, double *D){
-    for(int i = 0; i < lda; i++) for(int j = 0; j < lda; j++){
-        D[j + i * lda] = A[i + j * lda];
+void transpose(int lda, double *A, double *D){
+    for(int i = 0; i < lda; ++i) for(int j = 0; j < lda; ++j){
+        D[i + j * lda] = A[j + i * lda];
     }
 }
 
@@ -47,16 +70,39 @@ void copy_transpose(int lda, double *A, double *D){
  * where C is M-by-N, A is M-by-K, and B is K-by-N.
  */
 static void do_block(int lda, int M, int N, int K, double* A, double* B, double* C) {
-    // For each row i of A
-    for (int i = 0; i < M; ++i) {
-        // For each column j of B
-        for (int j = 0; j < N; ++j) {
-            // Compute C(i,j)
-            double cij = C[i + j * lda];
-            for (int k = 0; k < K; ++k) {
-                cij += A[i + k * lda] * B[k + j * lda];
+    // Transpose A so that it's row-major
+    // double *D = (double*) malloc(sizeof(double) * lda * lda);
+    // transpose(lda, A, D);
+    // A = D;
+
+    // Perform micro kernel on 4x4 blocks
+    for (int i = 0; i < M - M % 4; i += 4) {
+        for (int j = 0; j < N - N % 4; j += 4) {
+            // Compute C(i,j) with micro kernel
+            micro_kernel(lda, K, A + i, B + j * lda, C + i + j * lda);
+        }
+    }
+    // Process edge cases seperately
+    if(M % 4 > 0){
+        for(int i = M - M % 4; i < M; i++){
+            for(int j = 0; j < N; j++){
+                double cij = C[i + j * lda];
+                for (int k = 0; k < K; ++k) {
+                    cij += A[i + k * lda] * B[k + j * lda];
+                }
+                C[i + j * lda] = cij;
             }
-            C[i + j * lda] = cij;
+        }
+    }
+    if(N % 4 > 0){
+        for(int i = 0; i < M - M % 4; i++){
+            for(int j = N - N % 4; j < N; j++){
+                double cij = C[i + j * lda];
+                for (int k = 0; k < K; ++k) {
+                    cij += A[i + k * lda] * B[k + j * lda];
+                }
+                C[i + j * lda] = cij;
+            }
         }
     }
 }
@@ -65,37 +111,21 @@ static void do_block(int lda, int M, int N, int K, double* A, double* B, double*
  *  C := C + A * B
  * where A, B, and C are lda-by-lda matrices stored in column-major format.
  * On exit, A and B maintain their input values. */
-void square_dgemm(int lda, double* A, double* B, double* C) {
-    double *D = (*double) malloc(sizeof(double) * lda * lda);
-    copy_transpose(lda, A, D);
+void square_dgemm(int lda, double* A, double* B, double* C) {   
+    // Loop reordering
     // For each block-row of A
-    for (int i = 0; i < lda; i += KERNEL_SIZE) {
-        // For each block-column of B
-        for (int j = 0; j < lda; j += KERNEL_SIZE) {
-            // Accumulate block dgemms into block of C
-            for (int k = 0; k < lda; k += KERNEL_SIZE) {
+    for (int k = 0; k < lda; k += L2_SIZE) {
+        for (int i = 0; i < lda; i += L2_SIZE) {
+            // For each block-column of B
+            for (int j = 0; j < lda; j += L2_SIZE) {
+                // Accumulate block dgemms into block of C
                 // Correct block dimensions if block "goes off edge of" the matrix
-                // int M = min(BLOCK_SIZE, lda - i);
-                // int N = min(BLOCK_SIZE, lda - j);
-                // int K = min(BLOCK_SIZE, lda - k);
+                int M = min(L2_SIZE, lda - i);
+                int N = min(L2_SIZE, lda - j);
+                int K = min(L2_SIZE, lda - k);
                 // Perform individual block dgemm
-                micro_kernel(lda, D, B, C);
+                do_block(lda, M, N, K, A + i + k * lda, B + k + j * lda, C + i + j * lda);
             }
         }
     }
-    // // For each block-row of A
-    // for (int i = 0; i < lda; i += BLOCK_SIZE) {
-    //     // For each block-column of B
-    //     for (int j = 0; j < lda; j += BLOCK_SIZE) {
-    //         // Accumulate block dgemms into block of C
-    //         for (int k = 0; k < lda; k += BLOCK_SIZE) {
-    //             // Correct block dimensions if block "goes off edge of" the matrix
-    //             int M = min(BLOCK_SIZE, lda - i);
-    //             int N = min(BLOCK_SIZE, lda - j);
-    //             int K = min(BLOCK_SIZE, lda - k);
-    //             // Perform individual block dgemm
-    //             do_block(lda, M, N, K, A + i + k * lda, B + k + j * lda, C + i + j * lda);
-    //         }
-    //     }
-    // }
 }

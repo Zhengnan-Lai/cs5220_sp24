@@ -25,7 +25,7 @@ CMAKE_AR:FILEPATH=/usr/bin/ar
 
 //Choose the type of build, options are: None Debug Release RelWithDebInfo
 // MinSizeRel ...
-CMAKE_BUILD_TYPE:STRING=Debug
+CMAKE_BUILD_TYPE:STRING=Release
 
 //Enable/Disable color output during build.
 CMAKE_COLOR_MAKEFILE:BOOL=ON
@@ -34,7 +34,7 @@ CMAKE_COLOR_MAKEFILE:BOOL=ON
 CMAKE_CRAYPE_LINKTYPE:STRING=dynamic
 
 //saved value of LOADEDMODULES environment variable
-CMAKE_CRAYPE_LOADEDMODULES:STRING=craype-x86-milan:libfabric/1.15.2.0:craype-network-ofi:xpmem/2.6.2-2.5_2.33__gd067c3f.shasta:PrgEnv-gnu/8.5.0:cray-dsmml/0.2.2:cray-libsci/23.12.5:cray-mpich/8.1.28:craype/2.7.30:gcc-native/12.3:perftools-base/23.12.0:cpe/23.12:cudatoolkit/12.2:craype-accel-nvidia80:gpu/1.0:cmake/3.22.0
+CMAKE_CRAYPE_LOADEDMODULES:STRING=craype-x86-milan:libfabric/1.15.2.0:craype-network-ofi:xpmem/2.6.2-2.5_2.38__gd067c3f.shasta:PrgEnv-gnu/8.5.0:cray-dsmml/0.2.2:cray-libsci/23.12.5:cray-mpich/8.1.28:craype/2.7.30:gcc-native/12.3:perftools-base/23.12.0:cpe/23.12:cudatoolkit/12.2:craype-accel-nvidia80:gpu/1.0:cmake/3.22.0
 
 //CXX compiler
 CMAKE_CXX_COMPILER:FILEPATH=/opt/cray/pe/craype/2.7.30/bin/CC

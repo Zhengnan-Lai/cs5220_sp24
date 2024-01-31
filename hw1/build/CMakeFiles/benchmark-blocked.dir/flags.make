@@ -7,11 +7,11 @@ C_DEFINES =
 
 C_INCLUDES = 
 
-C_FLAGS = -g -Wall -pedantic -march=znver3
+C_FLAGS = -O3 -DNDEBUG -Wall -pedantic -march=znver3
 
 CXX_DEFINES = 
 
 CXX_INCLUDES = 
 
-CXX_FLAGS = -g -Wall -pedantic -march=znver3
+CXX_FLAGS = -O3 -DNDEBUG -Wall -pedantic -march=znver3
 
