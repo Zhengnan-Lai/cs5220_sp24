@@ -1,4 +1,0 @@
-/global/homes/z/zhengnan/CLASS-SP24/hw2/build/CMakeFiles/serial.dir
-/global/homes/z/zhengnan/CLASS-SP24/hw2/build/CMakeFiles/openmp.dir
-/global/homes/z/zhengnan/CLASS-SP24/hw2/build/CMakeFiles/edit_cache.dir
-/global/homes/z/zhengnan/CLASS-SP24/hw2/build/CMakeFiles/rebuild_cache.dir
