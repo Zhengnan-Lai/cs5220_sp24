@@ -62,6 +62,7 @@ CMakeFiles/serial.dir/main.cpp.o: ../main.cpp \
   /usr/include/bits/mathcalls.h \
   /usr/include/bits/mathcalls-narrow.h \
   /usr/include/bits/iscanonical.h \
+  /usr/include/bits/mathinline.h \
   /usr/include/c++/12/bits/std_abs.h \
   /usr/include/stdlib.h \
   /usr/include/bits/waitflags.h \
@@ -80,6 +81,7 @@ CMakeFiles/serial.dir/main.cpp.o: ../main.cpp \
   /usr/include/bits/struct_mutex.h \
   /usr/include/bits/struct_rwlock.h \
   /usr/include/alloca.h \
+  /usr/include/bits/stdlib-bsearch.h \
   /usr/include/bits/stdlib-float.h \
   /usr/include/c++/12/cstring \
   /usr/include/string.h \
@@ -168,6 +170,7 @@ CMakeFiles/serial.dir/main.cpp.o: ../main.cpp \
   /usr/include/bits/types/cookie_io_functions_t.h \
   /usr/include/bits/stdio_lim.h \
   /usr/include/bits/sys_errlist.h \
+  /usr/include/bits/stdio.h \
   /usr/include/c++/12/cerrno \
   /usr/include/errno.h \
   /usr/include/bits/errno.h \
@@ -255,6 +258,7 @@ CMakeFiles/serial.dir/serial.cpp.o: ../serial.cpp \
   /usr/include/bits/mathcalls.h \
   /usr/include/bits/mathcalls-narrow.h \
   /usr/include/bits/iscanonical.h \
+  /usr/include/bits/mathinline.h \
   /usr/include/c++/12/bits/std_abs.h \
   /usr/include/stdlib.h \
   /usr/lib64/gcc/x86_64-suse-linux/12/include/stddef.h \
@@ -285,6 +289,7 @@ CMakeFiles/serial.dir/serial.cpp.o: ../serial.cpp \
   /usr/include/bits/struct_mutex.h \
   /usr/include/bits/struct_rwlock.h \
   /usr/include/alloca.h \
+  /usr/include/bits/stdlib-bsearch.h \
   /usr/include/bits/stdlib-float.h \
   /usr/include/c++/12/cstdio \
   /usr/include/stdio.h \
@@ -297,7 +302,8 @@ CMakeFiles/serial.dir/serial.cpp.o: ../serial.cpp \
   /usr/include/bits/types/struct_FILE.h \
   /usr/include/bits/types/cookie_io_functions_t.h \
   /usr/include/bits/stdio_lim.h \
-  /usr/include/bits/sys_errlist.h
+  /usr/include/bits/sys_errlist.h \
+  /usr/include/bits/stdio.h
 
 
 ../serial.cpp:
@@ -347,6 +353,8 @@ CMakeFiles/serial.dir/serial.cpp.o: ../serial.cpp \
 /usr/include/asm/errno.h:
 
 /usr/include/errno.h:
+
+/usr/include/bits/stdio.h:
 
 /usr/include/bits/types/cookie_io_functions_t.h:
 
@@ -409,6 +417,10 @@ CMakeFiles/serial.dir/serial.cpp.o: ../serial.cpp \
 /usr/include/c++/12/x86_64-suse-linux/bits/error_constants.h:
 
 /usr/include/c++/12/bits/locale_classes.h:
+
+/usr/include/c++/12/x86_64-suse-linux/bits/atomic_word.h:
+
+/usr/include/bits/setjmp.h:
 
 /usr/include/bits/types/time_t.h:
 
@@ -484,6 +496,8 @@ CMakeFiles/serial.dir/serial.cpp.o: ../serial.cpp \
 
 ../main.cpp:
 
+/usr/include/bits/stdlib-bsearch.h:
+
 /usr/include/asm-generic/errno.h:
 
 /usr/include/bits/fp-logb.h:
@@ -551,6 +565,8 @@ CMakeFiles/serial.dir/serial.cpp.o: ../serial.cpp \
 /usr/include/c++/12/new:
 
 /usr/include/c++/12/ratio:
+
+/usr/include/bits/mathinline.h:
 
 /usr/include/gnu/stubs-64.h:
 
@@ -629,8 +645,6 @@ CMakeFiles/serial.dir/serial.cpp.o: ../serial.cpp \
 /usr/include/bits/waitstatus.h:
 
 /usr/include/sys/select.h:
-
-/usr/include/c++/12/x86_64-suse-linux/bits/atomic_word.h:
 
 /usr/include/bits/select.h:
 
@@ -741,5 +755,3 @@ CMakeFiles/serial.dir/serial.cpp.o: ../serial.cpp \
 /usr/include/ctype.h:
 
 /usr/include/pthread.h:
-
-/usr/include/bits/setjmp.h:

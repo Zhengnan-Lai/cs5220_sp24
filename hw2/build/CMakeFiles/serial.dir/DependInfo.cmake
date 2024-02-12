@@ -8,8 +8,8 @@ set(CMAKE_DEPENDS_LANGUAGES
 
 # The set of dependency files which are needed:
 set(CMAKE_DEPENDS_DEPENDENCY_FILES
-  "/global/homes/z/zhengnan/CLASS-SP24/hw2/main.cpp" "CMakeFiles/serial.dir/main.cpp.o" "gcc" "CMakeFiles/serial.dir/main.cpp.o.d"
-  "/global/homes/z/zhengnan/CLASS-SP24/hw2/serial.cpp" "CMakeFiles/serial.dir/serial.cpp.o" "gcc" "CMakeFiles/serial.dir/serial.cpp.o.d"
+  "/global/homes/z/zhengnan/cs5220_sp24/hw2/main.cpp" "CMakeFiles/serial.dir/main.cpp.o" "gcc" "CMakeFiles/serial.dir/main.cpp.o.d"
+  "/global/homes/z/zhengnan/cs5220_sp24/hw2/serial.cpp" "CMakeFiles/serial.dir/serial.cpp.o" "gcc" "CMakeFiles/serial.dir/serial.cpp.o.d"
   )
 
 # Targets to which this target links.
