@@ -4,28 +4,26 @@
 
 // Credit: stack exchange
 typedef struct {
-  particle_t *array;
+  particle_t **array;
   size_t used;
   size_t size;
 } Bin;
 
-void initArray(Bin *a, size_t initialSize) {
-  a->array = malloc(initialSize * sizeof(particle_t));
+void initBin(Bin *a, size_t initialSize) {
+  a->array = (particle_t**) malloc(initialSize * sizeof(particle_t*));
   a->used = 0;
   a->size = initialSize;
 }
 
-void insertArray(Bin *a, particle_t element) {
-  // a->used is the number of used entries, because a->array[a->used++] updates a->used only *after* the array has been accessed.
-  // Therefore a->used can go up to a->size 
+void insertBin(Bin *a, particle_t& element) {
   if (a->used == a->size) {
     a->size *= 2;
-    a->array = realloc(a->array, a->size * sizeof(particle_t));
+    a->array = (particle_t**) realloc(a->array, a->size * sizeof(particle_t*));
   }
-  a->array[a->used++] = element;
+  a->array[a->used++] = &element;
 }
 
-void freeArray(Bin *a) {
+void freeBin(Bin *a) {
   free(a->array);
   a->array = NULL;
   a->used = a->size = 0;
@@ -36,15 +34,14 @@ static double bin_length;
 // The number of bins (in one axis)
 static int num_bins;
 // The bins where particles are in
-particle_t* bins;
-// The indices of bins each particle is in
-int* bin_x; int* bin_y;
-// The number of particles in each bin
-int* parts_in_bin;
+Bin* bins;
+// // The indices of bins each particle is in
+// int* bin_x; int* bin_y;
 // Compute the index at the (i,j) entry
 inline int key(int i,int j) {return i + j * num_bins;}
 
 #define min(a,b) a < b ? a : b
+#define max(a,b) a > b ? a : b
 
 
 // Apply the force from neighbor to particle
@@ -95,44 +92,58 @@ void init_simulation(particle_t* parts, int num_parts, double size) {
     // algorithm begins. Do not do any particle simulation here
 
     // Legal range is [0, size / bin_length]
-    // num_bins = ((int) min(cbrt(9 * num_parts), size / (1.1 * cutoff)));
-    // bin_length = size / num_bins + 1e-8;
-
-    bin_length = 1.1 * cutoff;
+    // bin_length = 2 * cutoff; // 193.586
+    // bin_length = 3 * cutoff; // 162.981
+    // bin_length = 4 * cutoff; // 141.216
+    bin_length = 5 * cutoff; // 136.009
+    // bin_length = 6 * cutoff; // 137.761
+    // bin_length = 7 * cutoff; // 149.835
+    // bin_length = 10 * cutoff; // 220.198
     num_bins = ((int) (size / bin_length)) + 1;
-    
-    bin_x = (int*) malloc(sizeof(int) * num_parts);
-    bin_y = (int*) malloc(sizeof(int) * num_parts);
-    // The size of bins is num_bins x num_bins x num_parts
-    bins = (particle_t*) malloc(sizeof(particle_t) * num_bins * num_bins * num_parts);
-    parts_in_bin = (int*) malloc(sizeof(int) * num_bins * num_bins);
+    // bin_x = (int*) malloc(sizeof(int) * num_parts);
+    // bin_y = (int*) malloc(sizeof(int) * num_parts);
+    bins = (Bin*) malloc(sizeof(Bin) * num_bins * num_bins);
+    for(int i = 0; i < num_bins; i++) for(int j = 0; j < num_bins; j++) {
+        initBin(bins + key(i,j), 32);
+    }
 }
 
 void simulate_one_step(particle_t* parts, int num_parts, double size) {
     // Reset the number of particles in each bin
     for(int i = 0; i < num_bins; i++) for(int j = 0; j < num_bins; j++){
-        parts_in_bin[key(i,j)] = 0;
+        bins[key(i,j)].used = 0;
     }
     // Put the particles into bins
     for(int i = 0; i < num_parts; i++){
-        bin_x[i] = (int) (parts[i].x / bin_length);
-        bin_y[i] = (int) (parts[i].y / bin_length);
-        int index = key(bin_x[i], bin_y[i]);
-        bins[index + parts_in_bin[index] * num_bins * num_bins] = parts[i];
-        parts_in_bin[index]++;
+        // bin_x[i] = (int) (parts[i].x / bin_length);
+        // bin_y[i] = (int) (parts[i].y / bin_length);
+        parts[i].ax = 0; parts[i].ay = 0;
+        int index = key((int) (parts[i].x / bin_length), (int) (parts[i].y / bin_length));
+        insertBin(bins + index, parts[i]);
     }
     // Compute Forces
-    for (int i = 0; i < num_parts; ++i) {
-        parts[i].ax = parts[i].ay = 0;
-        for(int j = -1; j <= 1; j++) for(int k = -1; k <= 1; k++){
-            // Discard illegal bins
-            if(bin_x[i] + j < 0 || bin_x[i] + j >= num_bins || bin_y[i] + k < 0 || bin_y[i] + k >= num_bins) continue;
-            int index = key(bin_x[i]+j, bin_y[i]+k);
-            for(int l = 0; l < parts_in_bin[index]; l++){
-                apply_force(parts[i], bins[index + l * num_bins * num_bins]);
+    for(int i = 0; i < num_bins; i++) for(int j = 0; j < num_bins; j++){
+        for(int dx = -1; dx <= 1; dx++) for(int dy = -1; dy <= 1; dy++){
+            if(i + dx < 0 || i + dx >= num_bins || j + dy < 0 || j + dy >= num_bins) continue;
+            int index1 = key(i,j), index2 = key(i+dx, j+dy);
+            for(int k = 0; k < bins[index1].used; k++){
+                for(int l = 0; l < bins[index2].used; l++){
+                    apply_force(*(bins[index1].array[k]), *(bins[index2].array[l]));
+                }
             }
         }
     }
+    // for (int i = 0; i < num_parts; ++i) {
+    //     parts[i].ax = parts[i].ay = 0;
+    //     for(int j = -1; j <= 1; j++) for(int k = -1; k <= 1; k++){
+    //         // Discard illegal bins
+    //         if(bin_x[i] + j < 0 || bin_x[i] + j >= num_bins || bin_y[i] + k < 0 || bin_y[i] + k >= num_bins) continue;
+    //         int index = key(bin_x[i]+j, bin_y[i]+k);
+    //         for(int l = 0; l < bins[index].used; l++){
+    //             apply_force(parts[i], bins[index].array[l]);
+    //         }
+    //     }
+    // }
     // for(int i = 0; i < num_parts; i++){
     //     parts[i].ax = 0; parts[i].ay = 0;
     //     for(int j = 0; j < num_parts; j++){

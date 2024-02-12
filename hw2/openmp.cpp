@@ -1,21 +1,48 @@
 #include "common.h"
-#include <cstdio>
 #include <cmath>
+#include <cstdio>
 #include <omp.h>
+
+// Credit: stack exchange
+typedef struct {
+  particle_t **array;
+  size_t used;
+  size_t size;
+} Bin;
+
+void initBin(Bin *a, size_t initialSize) {
+  a->array = (particle_t**) malloc(initialSize * sizeof(particle_t*));
+  a->used = 0;
+  a->size = initialSize;
+}
+
+void insertBin(Bin *a, particle_t& element) {
+  if (a->used == a->size) {
+    a->size *= 2;
+    a->array = (particle_t**) realloc(a->array, a->size * sizeof(particle_t*));
+  }
+  a->array[a->used++] = &element;
+}
+
+void freeBin(Bin *a) {
+  free(a->array);
+  a->array = NULL;
+  a->used = a->size = 0;
+}
 
 // The length of a square bin
 static double bin_length;
 // The number of bins (in one axis)
 static int num_bins;
 // The bins where particles are in
-particle_t* bins;
-// The indices of bins each particle is in
-int* bin_x; int* bin_y;
-// The number of particles in each bin
-int* parts_in_bin;
+Bin* bins;
+// // The indices of bins each particle is in
+// int* bin_x; int* bin_y;
 // Compute the index at the (i,j) entry
 inline int key(int i,int j) {return i + j * num_bins;}
 
+#define min(a,b) a < b ? a : b
+#define max(a,b) a > b ? a : b
 
 
 // Apply the force from neighbor to particle
@@ -66,54 +93,59 @@ void init_simulation(particle_t* parts, int num_parts, double size) {
     // algorithm begins. Do not do any particle simulation here
 
     // Legal range is [0, size / bin_length]
-    bin_length = 1.1 * cutoff;
+    // num_bins = (int) min(sqrt(3*num_parts/size), size / cutoff);
+    // bin_length = size / num_bins + 1e-8;
+    bin_length = 1.01 * cutoff;
     num_bins = ((int) (size / bin_length)) + 1;
-    bin_x = (int*) malloc(sizeof(int) * num_parts);
-    bin_y = (int*) malloc(sizeof(int) * num_parts);
+    
+    // bin_x = (int*) malloc(sizeof(int) * num_parts);
+    // bin_y = (int*) malloc(sizeof(int) * num_parts);
     // The size of bins is num_bins x num_bins x num_parts
-    bins = (particle_t*) malloc(sizeof(particle_t) * num_bins * num_bins * num_parts);
-    parts_in_bin = (int*) malloc(sizeof(int) * num_bins * num_bins);
+    bins = (Bin*) malloc(sizeof(Bin) * num_bins * num_bins);
+    for(int i = 0; i < num_bins; i++) for(int j = 0; j < num_bins; j++) {
+        initBin(bins + key(i,j), 32);
+    }
 }
 
 void simulate_one_step(particle_t* parts, int num_parts, double size) {
-	int id = omp_get_thread_num();
-	int nthrds = omp_get_num_threads();
+    // Reset the number of particles in each bin
+    #pragma omp for collapse(2)
+    for(int i = 0; i < num_bins; i++){
+        for(int j = 0; j < num_bins; j++){
+            bins[key(i,j)].used = 0;
+        }
+    }
+    // Put the particles into bins
+    #pragma omp single
+    for(int i = 0; i < num_parts; i++){
+        // bin_x[i] = (int) (parts[i].x / bin_length);
+        // bin_y[i] = (int) (parts[i].y / bin_length);
+        parts[i].ax = 0; parts[i].ay = 0;
+        int index = key((int) (parts[i].x / bin_length), (int) (parts[i].y / bin_length));
+        insertBin(bins + index, parts[i]);
+    }
 
-	// Parallelly reset the number of particles in each bin
-	for(int i = id; i < num_bins; i += nthrds) for(int j = 0; j < num_bins; j++){
-		parts_in_bin[key(i,j)] = 0;
-	}
+    // Compute Forces
+    #pragma omp for collapse(4)
+    for(int i = 0; i < num_bins; i++){
+        for(int j = 0; j < num_bins; j++){
+            for(int dx = -1; dx <= 1; dx++){
+                for(int dy = -1; dy <= 1; dy++){
+                    if(i + dx < 0 || i + dx >= num_bins || j + dy < 0 || j + dy >= num_bins) continue;
+                    int index1 = key(i,j), index2 = key(i+dx, j+dy);
+                    for(int k = 0; k < bins[index1].used; k++){
+                        for(int l = 0; l < bins[index2].used; l++){
+                            apply_force(*(bins[index1].array[k]), *(bins[index2].array[l]));
+                        }
+                    }
+                }
+            }
+        }
+    }
 
-	#pragma omp barrier
-	// Parallelly put the particles into bins
-	for(int i = id; i < num_parts; i += nthrds){
-		bin_x[i] = (int) (parts[i].x / bin_length);
-		bin_y[i] = (int) (parts[i].y / bin_length);
-		int index = key(bin_x[i], bin_y[i]);
-		// printf("binx = %d, biny = %d, num_bins = %d\n", bin_x[i], bin_y[i], num_bins);
-		// printf("index = %d, parts = %d\n", index, parts_in_bin[index]);
-		// printf("size = %d\n", num_bins * num_bins * num_parts);
-		bins[index + parts_in_bin[index] * num_bins * num_bins] = parts[i];
-		parts_in_bin[index]++;
-	}
-	
-	#pragma omp barrier
-    // Parallelly compute forces
-	for (int i = id; i < num_parts; i += nthrds) {
-		parts[i].ax = parts[i].ay = 0;
-		for(int j = -1; j <= 1; j++) for(int k = -1; k <= 1; k++){
-			// Discard illegal bins
-			if(bin_x[i] + j < 0 || bin_x[i] + j >= num_bins || bin_y[i] + k < 0 || bin_y[i] + k >= num_bins) continue;
-			int index = key(bin_x[i]+j, bin_y[i]+k);
-			for(int l = 0; l < parts_in_bin[index]; l++){
-				apply_force(parts[i], bins[index + l * num_bins * num_bins]);
-			}
-		}
-	}
-
-	#pragma omp barrier
-	// Parallelly move particles
-	for (int i = id; i < num_parts; i += nthrds) {
-		move(parts[i], size);
-	}
+    #pragma omp for
+    // Move Particles
+    for (int i = 0; i < num_parts; ++i) {
+        move(parts[i], size);
+    }
 }
