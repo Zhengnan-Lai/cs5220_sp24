@@ -1,0 +1,3 @@
+/global/homes/z/zhengnan/cs5220_sp24/hw2/build/_CPack_Packages/Linux/TGZ/CS5220Group31_hw2/./serial.cpp
+/global/homes/z/zhengnan/cs5220_sp24/hw2/build/_CPack_Packages/Linux/TGZ/CS5220Group31_hw2/./openmp.cpp
+/global/homes/z/zhengnan/cs5220_sp24/hw2/build/_CPack_Packages/Linux/TGZ/CS5220Group31_hw2/./CS5220Group31_hw2.pdf
