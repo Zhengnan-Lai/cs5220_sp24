@@ -46,5 +46,7 @@ CMakeFiles/openmp.dir/openmp.cpp.o: \
  /usr/include/bits/types/FILE.h /usr/include/bits/types/struct_FILE.h \
  /usr/include/bits/types/cookie_io_functions_t.h \
  /usr/include/bits/stdio_lim.h /usr/include/bits/sys_errlist.h \
- /usr/include/bits/stdio.h \
+ /usr/include/bits/stdio.h /usr/include/time.h /usr/include/bits/time.h \
+ /usr/include/bits/timex.h /usr/include/bits/types/struct_tm.h \
+ /usr/include/bits/types/struct_itimerspec.h \
  /usr/lib64/gcc/x86_64-suse-linux/12/include/omp.h

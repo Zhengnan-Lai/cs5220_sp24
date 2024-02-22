@@ -1,9 +1,9 @@
 #include "common.h"
 #include <cmath>
 #include <cstdio>
+#include <time.h>
 #include <omp.h>
 
-// Credit: stack exchange
 typedef struct {
   particle_t **array;
   size_t used;
@@ -40,6 +40,8 @@ Bin* bins;
 omp_lock_t* locks;
 // Compute the index at the (i,j) entry
 inline int key(int i,int j) {return i + j * num_bins;}
+
+static double cTime, sTime; 
 
 #define min(a,b) a < b ? a : b
 #define max(a,b) a > b ? a : b
@@ -105,25 +107,25 @@ void init_simulation(particle_t* parts, int num_parts, double size) {
         initBin(bins + key(i,j), 32);
         omp_init_lock(locks + key(i,j));
     }
+    cTime = 0; sTime = 0;
 }
 
 void simulate_one_step(particle_t* parts, int num_parts, double size) {
+    // time_t start = clock();
     // Reset the number of particles in each bin
     #pragma omp for
     for(int i = 0; i < num_bins * num_bins; i++){
         bins[i].used = 0;
     }
-
-    // Put the particles into bins
+    // Put the particles into bins  
     #pragma omp for
     for(int i = 0; i < num_parts; i++){
         parts[i].ax = 0; parts[i].ay = 0;
         int index = key((int) (parts[i].x / bin_length), (int) (parts[i].y / bin_length));
         omp_set_lock(locks + index);
-        insertBin(bins + index, parts[i]);
+        insertBin(bins + index, parts[i]); 
         omp_unset_lock(locks + index);
     }
-
     // Compute Forces
     #pragma omp for
     for(int i = 0; i < num_bins; i++){
@@ -141,10 +143,18 @@ void simulate_one_step(particle_t* parts, int num_parts, double size) {
             }
         }
     }
-
     // Move Particles
     #pragma omp for
     for (int i = 0; i < num_parts; ++i) {
         move(parts[i], size);
     }
+    // time_t end = clock();
+    // #pragma omp critical
+    // {   
+    //     cTime += (double) ((end - start) / CLOCKS_PER_SEC);
+    // }
+    // #pragma omp single
+    // {
+    //     printf("Computation Time = %lf\n", cTime);
+    // }
 }

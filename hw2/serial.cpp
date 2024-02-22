@@ -2,7 +2,6 @@
 #include <cmath>
 #include <cstdio>
 
-// Credit: stack exchange
 typedef struct {
   particle_t **array;
   size_t used;
@@ -115,8 +114,6 @@ void simulate_one_step(particle_t* parts, int num_parts, double size) {
     }
     // Put the particles into bins
     for(int i = 0; i < num_parts; i++){
-        // bin_x[i] = (int) (parts[i].x / bin_length);
-        // bin_y[i] = (int) (parts[i].y / bin_length);
         parts[i].ax = 0; parts[i].ay = 0;
         int index = key((int) (parts[i].x / bin_length), (int) (parts[i].y / bin_length));
         insertBin(bins + index, parts[i]);

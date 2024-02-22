@@ -6,6 +6,7 @@
 #include <iostream>
 #include <random>
 #include <vector>
+#include <time.h>
 
 // =================
 // Helper Functions
@@ -120,7 +121,8 @@ int main(int argc, char** argv) {
     auto start_time = std::chrono::steady_clock::now();
 
     init_simulation(parts, num_parts, size);
-
+    
+    // time_t start = clock();
 #ifdef _OPENMP
 #pragma omp parallel default(shared)
 #endif
@@ -137,12 +139,12 @@ int main(int argc, char** argv) {
             }
         }
     }
-
+    // time_t end = clock();
     auto end_time = std::chrono::steady_clock::now();
 
     std::chrono::duration<double> diff = end_time - start_time;
     double seconds = diff.count();
-
+    // std::cout << "Computation Time = " <<  ((double) (end - start) / CLOCKS_PER_SEC) << " seconds\n";
     // Finalize
     std::cout << "Simulation Time = " << seconds << " seconds for " << num_parts << " particles.\n";
     fsave.close();

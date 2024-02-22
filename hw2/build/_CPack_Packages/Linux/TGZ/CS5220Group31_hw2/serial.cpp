@@ -2,7 +2,6 @@
 #include <cmath>
 #include <cstdio>
 
-// Credit: stack exchange
 typedef struct {
   particle_t **array;
   size_t used;
