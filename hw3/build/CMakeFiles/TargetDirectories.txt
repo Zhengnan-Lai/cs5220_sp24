@@ -1,0 +1,3 @@
+/global/homes/z/zhengnan/cs5220_sp24/hw3/build/CMakeFiles/gpu.dir
+/global/homes/z/zhengnan/cs5220_sp24/hw3/build/CMakeFiles/edit_cache.dir
+/global/homes/z/zhengnan/cs5220_sp24/hw3/build/CMakeFiles/rebuild_cache.dir
