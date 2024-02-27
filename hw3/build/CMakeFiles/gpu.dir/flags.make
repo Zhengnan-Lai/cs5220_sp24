@@ -6,5 +6,5 @@ CUDA_DEFINES =
 
 CUDA_INCLUDES = 
 
-CUDA_FLAGS =  -arch=sm_60 -g -std=c++11
+CUDA_FLAGS =  -arch=sm_60 -O3 -DNDEBUG -std=c++11
 

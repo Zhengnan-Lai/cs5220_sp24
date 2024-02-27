@@ -69,6 +69,7 @@ CMakeFiles/gpu.dir/main.cu.o : /global/homes/z/zhengnan/cs5220_sp24/hw3/main.cu 
     /usr/include/bits/struct_mutex.h \
     /usr/include/bits/struct_rwlock.h \
     /usr/include/alloca.h \
+    /usr/include/bits/stdlib-bsearch.h \
     /usr/include/bits/stdlib-float.h \
     /usr/include/c++/12/bits/std_abs.h \
     /opt/nvidia/hpc_sdk/Linux_x86_64/23.9/cuda/12.2/bin/../targets/x86_64-linux/include/driver_functions.h \
@@ -95,6 +96,7 @@ CMakeFiles/gpu.dir/main.cu.o : /global/homes/z/zhengnan/cs5220_sp24/hw3/main.cu 
     /usr/include/bits/types/cookie_io_functions_t.h \
     /usr/include/bits/stdio_lim.h \
     /usr/include/bits/sys_errlist.h \
+    /usr/include/bits/stdio.h \
     /usr/include/assert.h \
     /opt/nvidia/hpc_sdk/Linux_x86_64/23.9/cuda/12.2/bin/../targets/x86_64-linux/include/crt/math_functions.h \
     /usr/include/c++/12/math.h \
@@ -111,6 +113,7 @@ CMakeFiles/gpu.dir/main.cu.o : /global/homes/z/zhengnan/cs5220_sp24/hw3/main.cu 
     /usr/include/bits/mathcalls.h \
     /usr/include/bits/mathcalls-narrow.h \
     /usr/include/bits/iscanonical.h \
+    /usr/include/bits/mathinline.h \
     /opt/nvidia/hpc_sdk/Linux_x86_64/23.9/cuda/12.2/bin/../targets/x86_64-linux/include/crt/math_functions.hpp \
     /opt/nvidia/hpc_sdk/Linux_x86_64/23.9/cuda/12.2/bin/../targets/x86_64-linux/include/crt/device_functions.h \
     /opt/nvidia/hpc_sdk/Linux_x86_64/23.9/cuda/12.2/bin/../targets/x86_64-linux/include/crt/device_functions.hpp \
