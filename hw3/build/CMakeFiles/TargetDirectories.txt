@@ -1,3 +1,9 @@
 /global/homes/z/zhengnan/cs5220_sp24/hw3/build/CMakeFiles/gpu.dir
+/global/homes/z/zhengnan/cs5220_sp24/hw3/build/CMakeFiles/package.dir
+/global/homes/z/zhengnan/cs5220_sp24/hw3/build/CMakeFiles/package_source.dir
 /global/homes/z/zhengnan/cs5220_sp24/hw3/build/CMakeFiles/edit_cache.dir
 /global/homes/z/zhengnan/cs5220_sp24/hw3/build/CMakeFiles/rebuild_cache.dir
+/global/homes/z/zhengnan/cs5220_sp24/hw3/build/CMakeFiles/list_install_components.dir
+/global/homes/z/zhengnan/cs5220_sp24/hw3/build/CMakeFiles/install.dir
+/global/homes/z/zhengnan/cs5220_sp24/hw3/build/CMakeFiles/install/local.dir
+/global/homes/z/zhengnan/cs5220_sp24/hw3/build/CMakeFiles/install/strip.dir

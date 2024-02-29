@@ -43,6 +43,16 @@ __device__ void apply_force_gpu(particle_t& particle, particle_t& neighbor) {
     atomicAdd(&neighbor.ay, -coef * dy);
 }
 
+__global__ void compute_forces_gpu(particle_t* particles, int num_parts) {
+    // Get thread (particle) ID
+    int tid = threadIdx.x + blockIdx.x * blockDim.x;
+    if (tid >= num_parts)
+        return;
+    particles[tid].ax = particles[tid].ay = 0;
+    for (int j = 0; j < num_parts; j++)
+        apply_force_gpu(particles[tid], particles[j]);
+}
+
 __global__ void move_gpu(particle_t* particles, int num_parts, double size) {
 
     // Get thread (particle) ID
@@ -112,11 +122,11 @@ __global__ void compute_forces_bin_gpu(particle_t* parts, int num_parts, int* pa
 __global__ void count_parts_gpu(particle_t* parts, int num_parts, int* part_id_gpu, int* bin_id_gpu) {
     int tid = threadIdx.x + blockIdx.x * blockDim.x;
     if (tid >= num_parts) return;
-    // reset accelerations here
     parts[tid].ax = parts[tid].ay = 0;
     int x = parts[tid].x / bin_length_gpu;
     int y = parts[tid].y / bin_length_gpu;
-    atomicAdd(bin_id_gpu + x + y * num_bins_gpu, 1);
+    int index = x + y * num_bins_gpu;
+    atomicAdd(bin_id_gpu + index, 1);
 }
 
 __global__ void insert_bins_gpu(particle_t* parts, int num_parts, int* part_id_gpu, int* bin_id_gpu) {
@@ -124,8 +134,9 @@ __global__ void insert_bins_gpu(particle_t* parts, int num_parts, int* part_id_g
     if (tid >= num_parts) return;
     int x = parts[tid].x / bin_length_gpu;
     int y = parts[tid].y / bin_length_gpu;
-    int id = atomicAdd(bin_id_gpu + x + y * num_bins_gpu, 1);
-    part_id_gpu[id] = tid;
+    int index = x + y * num_bins_gpu;
+    int offset = atomicAdd(bin_id_gpu + index, 1);
+    part_id_gpu[offset] = tid;
 }
 
 void init_simulation(particle_t* parts, int num_parts, double size) {

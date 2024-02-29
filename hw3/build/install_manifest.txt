@@ -1,0 +1,2 @@
+/global/homes/z/zhengnan/cs5220_sp24/hw3/build/_CPack_Packages/Linux/TGZ/CS5220zl345_hw3/./gpu.cu
+/global/homes/z/zhengnan/cs5220_sp24/hw3/build/_CPack_Packages/Linux/TGZ/CS5220zl345_hw3/./CS5220zl345_hw3.pdf
