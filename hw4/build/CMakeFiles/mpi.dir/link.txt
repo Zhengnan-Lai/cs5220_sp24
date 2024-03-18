@@ -1,0 +1,1 @@
+/opt/cray/pe/craype/2.7.30/bin/CC -O3 -DNDEBUG CMakeFiles/mpi.dir/main.cpp.o CMakeFiles/mpi.dir/mpi.cpp.o -o mpi 
