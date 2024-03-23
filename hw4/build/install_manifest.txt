@@ -1,0 +1,2 @@
+/global/homes/z/zhengnan/cs5220_sp24/hw4/build/_CPack_Packages/Linux/TGZ/CS5220zl345_hw4/./mpi.cpp
+/global/homes/z/zhengnan/cs5220_sp24/hw4/build/_CPack_Packages/Linux/TGZ/CS5220zl345_hw4/./CS5220zl345_hw4.pdf

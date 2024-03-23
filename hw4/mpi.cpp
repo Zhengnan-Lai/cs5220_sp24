@@ -22,8 +22,8 @@ void apply_force(particle_t& particle, particle_t& neighbor) {
     double coef = (1 - cutoff / r) / r2 / mass;
     particle.vx += coef * dx * dt;
     particle.vy += coef * dy * dt;
-    // neighbor.vx -= coef * dx * dt;
-    // neighbor.vy -= coef * dy * dt;
+    neighbor.vx -= coef * dx * dt;
+    neighbor.vy -= coef * dy * dt;
 }
 
 // Integrate the ODE
@@ -91,6 +91,10 @@ static int num_rows_per_proc;
 static int row_st;
 // The end of rows
 static int row_ed;
+// The start of columns
+static int col_st;
+// The end of columns
+static int col_ed;
 // The indices of the particles
 std::vector<int>* indices;
 // The bins where particles are in
@@ -100,15 +104,12 @@ void init_simulation(particle_t* parts, int num_parts, double size, int rank, in
 	// You can use this space to initialize data objects that you may need
 	// This function will be called once before the algorithm begins
 	// Do not do any particle simulation here
-    // std::cout<<"num_procs = "<<num_procs<<std::endl;
-    bin_length = 2 * cutoff;
+    bin_length = 1.1 * cutoff;
     num_bins = ceil(size / bin_length);
     num_rows_per_proc = (num_procs + num_bins - 1) / num_procs;  
-    // std::cout<<"num_rows_per_proc = "<<num_rows_per_proc<<std::endl;
-    // Each processor contains the rows in the interval [row_st, row_ed)
-    row_st = rank * num_rows_per_proc;
+    // Each processor contains the rows in the interval [row_st, row_ed) x [col_st, col_ed)
+    row_st = min(rank * num_rows_per_proc, num_bins);
     row_ed = min((rank+1) * num_rows_per_proc, num_bins);
-    // std::cout<<"row_st = "<<row_st<<" , row_ed = "<<row_ed<<std::endl;
     indices = new std::vector<int>[(row_ed - row_st + 2) * num_bins];
     for(int i = 0; i < num_parts; i++){
         int x = parts[i].x / bin_length;
@@ -117,21 +118,46 @@ void init_simulation(particle_t* parts, int num_parts, double size, int rank, in
         indices[(x-row_st+1) * num_bins + y].push_back(bins.size());
         bins.push_back(parts[i]);
     }
-    // std::cout<<"bins_size = "<<bins.size()<<std::endl;
 }
 
+// TODO: two-way apply force, 2D implementation
 void simulate_one_step(particle_t* parts, int num_parts, double size, int rank, int num_procs) {
     // Apply forces
-    for(particle_t& p: bins){
-        int x = p.x / bin_length;
-        if(x < row_st || x >= row_ed) continue;
-        int y = p.y / bin_length;
-        for(int i = x-1; i <= x+1; i++) for(int j = y-1; j <= y+1; j++){
-            if(j < 0 || j >= num_bins) continue;
-            for(int index: indices[(i-row_st+1) * num_bins + j])
+    for(int x = row_st; x < row_ed; x++) for(int y = 0; y < num_bins; y++){
+        for(int j = 0; j < indices[(x-row_st+1) * num_bins + y].size(); j++){
+            particle_t& p = bins[indices[(x-row_st+1) * num_bins + y][j]];
+            // Apply force in the same bin
+            for(int k = j+1; k < indices[(x-row_st+1) * num_bins + y].size(); k++){
+                particle_t& p2 = bins[indices[(x-row_st+1) * num_bins + y][k]];
+                apply_force(p, p2);
+            }
+            // dx = 1, dy = 0
+            for(int index: indices[(x-row_st+2) * num_bins + y])
                 apply_force(p, bins[index]);
+            // dy = 1
+            if(y + 1 < num_bins){
+                // dx = -1
+                for(int index: indices[(x-row_st) * num_bins + y+1])
+                    apply_force(p, bins[index]);
+                // dx = 0 
+                for(int index: indices[(x-row_st+1) * num_bins + y+1])
+                    apply_force(p, bins[index]);
+                // dx = 1
+                for(int index: indices[(x-row_st+2) * num_bins + y+1])
+                    apply_force(p, bins[index]);
+            }
         }
     }
+    // for(particle_t& p: bins){
+    //     int x = p.x / bin_length;
+    //     if(x < row_st || x >= row_ed) continue;
+    //     int y = p.y / bin_length;
+    //     for(int i = x-1; i <= x+1; i++) for(int j = y-1; j <= y+1; j++){
+    //         if(j < 0 || j >= num_bins) continue;
+    //         for(int index: indices[(i-row_st+1) * num_bins + j])
+    //             apply_force(p, bins[index]);
+    //     }
+    // }
     for(int i = row_st - 1; i < row_ed + 1; i++) for(int j = 0; j < num_bins; j++){
         indices[(i-row_st+1) * num_bins + j].clear();
     }

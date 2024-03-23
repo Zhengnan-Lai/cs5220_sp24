@@ -2,7 +2,7 @@
 
 module load python
 # srun -N 1 --ntasks-per-node=1 ./mpi -s 777
-srun -N 1 --ntasks-per-node=1 ./mpi -n 100000
+# srun -N 1 --ntasks-per-node=1 ./mpi -n 100000
 srun -N 1 --ntasks-per-node=1 ./mpi -s 777 -o sout777
 ~/HW2_correctness/correctness-check.py sout777 ../sout777
 srun -N 1 --ntasks-per-node=1 ./mpi -s 666 -o sout666

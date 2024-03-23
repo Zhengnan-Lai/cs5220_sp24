@@ -1,0 +1,8 @@
+#!/bin/bash
+
+srun -N 1 --ntasks-per-node=1 ./mpi -n 1000 -s 1
+srun -N 1 --ntasks-per-node=1 ./mpi -n 10000 -s 1
+srun -N 1 --ntasks-per-node=1 ./mpi -n 100000 -s 1
+srun -N 1 --ntasks-per-node=64 ./mpi -n 2000000 -s 1
+srun -N 2 --ntasks-per-node=32 ./mpi -n 2000000 -s 1
+srun -N 2 --ntasks-per-node=64 ./mpi -n 2000000 -s 1
