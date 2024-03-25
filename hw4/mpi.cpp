@@ -104,12 +104,16 @@ void init_simulation(particle_t* parts, int num_parts, double size, int rank, in
 	// You can use this space to initialize data objects that you may need
 	// This function will be called once before the algorithm begins
 	// Do not do any particle simulation here
-    bin_length = 1.1 * cutoff;
+    bin_length = 2.2 * cutoff;
     num_bins = ceil(size / bin_length);
-    num_rows_per_proc = (num_procs + num_bins - 1) / num_procs;  
+    // num_rows_per_proc = (num_procs + num_bins - 1) / num_procs;  
     // Each processor contains the rows in the interval [row_st, row_ed) x [col_st, col_ed)
-    row_st = min(rank * num_rows_per_proc, num_bins);
-    row_ed = min((rank+1) * num_rows_per_proc, num_bins);
+    // row_st = min(rank * num_rows_per_proc, num_bins);
+    // row_ed = min((rank+1) * num_rows_per_proc, num_bins);
+    // indices = new std::vector<int>[(row_ed - row_st + 2) * num_bins];
+    num_rows_per_proc = num_bins / num_procs;
+    row_st = rank * num_rows_per_proc + (rank-1 < num_bins % num_procs ? rank : num_bins % num_procs);
+    row_ed = (rank+1) * num_rows_per_proc + (rank < num_bins % num_procs ? rank+1 : num_bins % num_procs);
     indices = new std::vector<int>[(row_ed - row_st + 2) * num_bins];
     for(int i = 0; i < num_parts; i++){
         int x = parts[i].x / bin_length;
@@ -120,7 +124,7 @@ void init_simulation(particle_t* parts, int num_parts, double size, int rank, in
     }
 }
 
-// TODO: two-way apply force, 2D implementation
+// TODO: 2D implementation
 void simulate_one_step(particle_t* parts, int num_parts, double size, int rank, int num_procs) {
     // Apply forces
     for(int x = row_st; x < row_ed; x++) for(int y = 0; y < num_bins; y++){
