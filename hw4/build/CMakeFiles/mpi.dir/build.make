@@ -108,6 +108,14 @@ mpi_EXTERNAL_OBJECTS =
 mpi: CMakeFiles/mpi.dir/main.cpp.o
 mpi: CMakeFiles/mpi.dir/mpi.cpp.o
 mpi: CMakeFiles/mpi.dir/build.make
+mpi: /opt/nvidia/hpc_sdk/Linux_x86_64/23.9/cuda/12.2/targets/x86_64-linux/lib/stubs/libcuda.so
+mpi: /opt/cray/pe/libsci/23.12.5/GNU/12.3/x86_64/lib/libsci_gnu_123_mpi.so
+mpi: /opt/cray/pe/mpich/8.1.28/ofi/gnu/12.3/lib/libmpi_gnu_123.so
+mpi: /opt/cray/pe/mpich/8.1.28/gtl/lib/libmpi_gtl_cuda.so
+mpi: /opt/cray/pe/libsci/23.12.5/GNU/12.3/x86_64/lib/libsci_gnu_123.so
+mpi: /usr/lib64/libdl.so
+mpi: /opt/cray/pe/dsmml/0.2.2/dsmml/lib/libdsmml.so
+mpi: /opt/cray/xpmem/2.6.2-2.5_2.38__gd067c3f.shasta/lib64/libxpmem.so
 mpi: CMakeFiles/mpi.dir/link.txt
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/global/homes/z/zhengnan/cs5220_sp24/hw4/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Linking CXX executable mpi"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/mpi.dir/link.txt --verbose=$(VERBOSE)

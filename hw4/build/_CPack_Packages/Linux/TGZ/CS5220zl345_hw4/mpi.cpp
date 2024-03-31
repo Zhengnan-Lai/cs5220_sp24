@@ -4,12 +4,11 @@
 #include <vector>
 #include <cmath>
 #include <cstdio>
-#include <iostream>
+#include <numeric>
 
 // Put any static global variables here that you will use throughout the simulation.
 
 bool part_cmp(particle_t& x, particle_t& y) {return x.id < y.id;}
-inline int min(int x, int y) {return x < y? x : y;}
 
 // Apply the force from neighbor to particle
 void apply_force(particle_t& particle, particle_t& neighbor) {
@@ -30,55 +29,19 @@ void apply_force(particle_t& particle, particle_t& neighbor) {
 void move(particle_t& p, double size) {
     // Slightly simplified Velocity Verlet integration
     // Conserves energy better than explicit Euler method
-    double pvx = p.vx;
-    double pvy = p.vy;
-    double px = p.x + pvx * dt;
-    double py = p.y + pvy * dt;
+    p.x += p.vx * dt;
+    p.y += p.vy * dt;
 
     // Bounce from walls
-    if(px < 0){
-        int n_bounce = ceil(-px / size);
-        if(n_bounce % 2){
-            p.vx = -pvx;
-            px = -px - (n_bounce - 1) * size;
-        }
-        else{
-            px = n_bounce * size + px;
-        }
+    while (p.x < 0 || p.x > size) {
+        p.x = p.x < 0 ? -p.x : 2 * size - p.x;
+        p.vx = -p.vx;
     }
-    else if(px > size){
-        int n_bounce = ceil((px - size) / size);
-        if(n_bounce % 2){
-            p.vx = -pvx;
-            px = (n_bounce + 1) * size - px;
-        }
-        else{
-            px = px - n_bounce * size;
-        }
-    }
-    p.x = px;
 
-    if(py < 0){
-        int n_bounce = ceil(-py / size);
-        if(n_bounce % 2){
-            p.vy = -pvy;
-            py = -py - (n_bounce - 1) * size;
-        }
-        else{
-            py = n_bounce * size + py;
-        }
+    while (p.y < 0 || p.y > size) {
+        p.y = p.y < 0 ? -p.y : 2 * size - p.y;
+        p.vy = -p.vy;
     }
-    else if(py > size){
-        int n_bounce = ceil((py - size) / size);
-        if(n_bounce % 2){
-            p.vy = -pvy;
-            py = (n_bounce + 1) * size - py;
-        }
-        else{
-            py = py - n_bounce * size;
-        }
-    }
-    p.y = py;
 }
 
 // The length of a square bin
@@ -91,6 +54,10 @@ static int num_rows_per_proc;
 static int row_st;
 // The end of rows
 static int row_ed;
+// The start of columns
+static int col_st;
+// The end of columns
+static int col_ed;
 // The indices of the particles
 std::vector<int>* indices;
 // The bins where particles are in
@@ -100,15 +67,11 @@ void init_simulation(particle_t* parts, int num_parts, double size, int rank, in
 	// You can use this space to initialize data objects that you may need
 	// This function will be called once before the algorithm begins
 	// Do not do any particle simulation here
-    // std::cout<<"num_procs = "<<num_procs<<std::endl;
-    bin_length = 1.1 * cutoff;
+    bin_length = 1.2 * cutoff;
     num_bins = ceil(size / bin_length);
     num_rows_per_proc = (num_procs + num_bins - 1) / num_procs;  
-    // std::cout<<"num_rows_per_proc = "<<num_rows_per_proc<<std::endl;
-    // Each processor contains the rows in the interval [row_st, row_ed)
-    row_st = rank * num_rows_per_proc;
-    row_ed = min((rank+1) * num_rows_per_proc, num_bins);
-    // std::cout<<"row_st = "<<row_st<<" , row_ed = "<<row_ed<<std::endl;
+    row_st = rank * num_rows_per_proc + (rank-1 < num_bins % num_procs ? rank : num_bins % num_procs);
+    row_ed = (rank+1) * num_rows_per_proc + (rank < num_bins % num_procs ? rank+1 : num_bins % num_procs);
     indices = new std::vector<int>[(row_ed - row_st + 2) * num_bins];
     for(int i = 0; i < num_parts; i++){
         int x = parts[i].x / bin_length;
@@ -117,10 +80,9 @@ void init_simulation(particle_t* parts, int num_parts, double size, int rank, in
         indices[(x-row_st+1) * num_bins + y].push_back(bins.size());
         bins.push_back(parts[i]);
     }
-    // std::cout<<"bins_size = "<<bins.size()<<std::endl;
 }
 
-// TODO: two-way apply force, 2D implementation
+// TODO: 2D implementation
 void simulate_one_step(particle_t* parts, int num_parts, double size, int rank, int num_procs) {
     // Apply forces
     for(particle_t& p: bins){
@@ -198,14 +160,14 @@ void simulate_one_step(particle_t* parts, int num_parts, double size, int rank, 
     for(particle_t& p: msg_from_top){
         int x = p.x / bin_length;
         int y = p.y / bin_length;
-        if(x < row_st - 1 || x >= row_ed + 1) continue;
+        if(x < row_st - 1 || x >= row_ed + 1) {printf("YES"); continue;}
         indices[(x-row_st+1) * num_bins + y].push_back(new_bins.size());
         new_bins.push_back(p);
     }
     for(particle_t& p: msg_from_bot){
         int x = p.x / bin_length;
         int y = p.y / bin_length;
-        if(x < row_st - 1 || x >= row_ed + 1) continue;
+        if(x < row_st - 1 || x >= row_ed + 1) {printf("YES"); continue;}
         indices[(x-row_st+1) * num_bins + y].push_back(new_bins.size());
         new_bins.push_back(p);
     }
@@ -227,9 +189,8 @@ void gather_for_save(particle_t* parts, int num_parts, double size, int rank, in
     std::vector<int> count(num_procs);
     MPI_Gather(&n, 1, MPI_INT, &count[0], 1, MPI_INT, 0, MPI_COMM_WORLD);
     
-    std::vector<int> displ(num_procs);
-    displ[0] = 0;
-    for(int i = 1; i < num_procs; i++) displ[i] = displ[i-1] + count[i-1];
+    std::vector<int> displ(num_procs, 0);
+    std::partial_sum(count.cbegin(), count.cend() - 1, displ.begin() + 1);
     MPI_Gatherv(&send_parts[0], send_parts.size(), PARTICLE, &parts[0], &count[0], &displ[0], PARTICLE, 0, MPI_COMM_WORLD);
     
     if(rank == 0) std::sort(parts, parts + num_parts, part_cmp);
